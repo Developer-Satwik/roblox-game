@@ -2,9 +2,15 @@
 
 A simple one-map Roblox baby battlegrounds game. Players will eventually use a custom crawling baby rig, headbutt attacks, butt-blocking, fart sprinting, and four starter abilities.
 
+## Latest update
+
+**Phase 2 baby character prototype is ready to install.** It layers a chubby crawling baby with procedural bonk, butt-block and fart-run poses over the Phase 1 controls. The existing map remains unchanged. It is a primitive-part visual shell, not yet a finished skinned character.
+
+[Install Phase 2](docs/PHASE2.md) · [Phase 2 Command Bar installer](tools/BabyBrawl_Phase2_Installer.luau)
+
 ## Project state
 
-**Phase 1: imported-map enhancement and temporary-avatar controls (not yet playtested in Roblox Studio).**
+**Phase 1: installed and reported working in Studio. Phase 2: visual baby prototype awaiting playtest.**
 
 The Phase 1 package includes a Studio Command Bar installer for the existing downloaded map, a server combat prototype, a client controller and HUD, an uninstall script, and instructions. The original third-party map itself is **not** included in this public repository.
 
