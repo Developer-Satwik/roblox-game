@@ -235,6 +235,8 @@ action.OnClientEvent:Connect(function(kind,uid,flag)
         emitter.Enabled=flag==true
     elseif kind=="HitFX" and uid==player.UserId then
         notify("BONK!")
+    elseif kind=="PracticeHitFX" and uid==player.UserId then
+        notify("PRACTICE BONK! "..tostring(math.max(0,math.ceil(tonumber(flag) or 0))).." HP LEFT")
     elseif kind=="BlockedFX" and uid==player.UserId then
         notify("BLOCKED!")
     end
