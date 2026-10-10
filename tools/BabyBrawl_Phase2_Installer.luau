@@ -67,6 +67,85 @@ local function detail(model: Model, name: string, parentPart: BasePart, size: Ve
     return p
 end
 
+
+-- The "Uncanny Baby" starter face: slightly unsettling self-confidence on a
+-- soft, crawling baby body. Inspired by exaggerated Roblox avatar expressions,
+-- but all features are generated as original geometry (no copied decals/assets).
+-- Geometry follows an approximate ellipsoid projection so it does not appear
+-- as a floating, flat face card when the baby turns.
+local function buildUncannyFace(shell: Model, head: BasePart)
+    local BROW = Color3.fromRGB(41, 32, 43)
+    local LINER = Color3.fromRGB(28, 25, 35)
+    local WHITE = Color3.fromRGB(250, 245, 239)
+    local IRIS = Color3.fromRGB(91, 61, 75)
+    local PUPIL = Color3.fromRGB(26, 23, 30)
+    local SHINE = Color3.fromRGB(255, 252, 247)
+    local BLUSH = Color3.fromRGB(238, 160, 154)
+    local LIP_DARK = Color3.fromRGB(109, 49, 70)
+    local LIP = Color3.fromRGB(173, 87, 116)
+    local LIP_LIGHT = Color3.fromRGB(211, 130, 146)
+
+    local rx, ry, rz = head.Size.X/2, head.Size.Y/2, head.Size.Z/2
+    local function stamp(name: string, size: Vector3, color: Color3,
+        x: number, y: number, forward: number, tilt: number?, shape: Enum.PartType?): Part
+        -- Project the center of each mark onto the forehead/cheek curvature.
+        local u = x/rx
+        local v = y/ry
+        local surfaceZ = -rz * math.sqrt(math.max(.09, 1-u*u-v*v))
+        return detail(shell, name, head, size, color,
+            CFrame.new(x, y, surfaceZ-forward) *
+            CFrame.Angles(0, 0, tilt or 0), shape)
+    end
+
+    -- Bald, round head; slight cheeks, but no big glowing "anime" eye whites.
+    for _, side in ipairs({-1,1}) do
+        local sideName = if side == -1 then "L" else "R"
+        detail(shell, "UncannyEar_"..sideName, head,
+            Vector3.new(.28,.31,.22), SKIN, CFrame.new(side*.76,-.14,.02))
+        stamp("UncannyBlush_"..sideName, Vector3.new(.32,.16,.026),
+            BLUSH, side*.49,-.24,.025, side*math.rad(5))
+
+        -- Heavy, winged almond eyes with a half-lidded, sideways stare.
+        stamp("UncannyEyeOutline_"..sideName, Vector3.new(.50,.28,.075),
+            LINER, side*.315,.12,.045, side*math.rad(11))
+        stamp("UncannySclera_"..sideName, Vector3.new(.405,.17,.050),
+            WHITE, side*.315,.116,.095, side*math.rad(10))
+        stamp("UncannyIris_"..sideName, Vector3.new(.225,.165,.047),
+            IRIS, side*.34,.105,.135)
+        stamp("UncannyPupil_"..sideName, Vector3.new(.142,.157,.045),
+            PUPIL, side*.345,.10,.16)
+        stamp("UncannyEyeShine_"..sideName, Vector3.new(.06,.065,.026),
+            SHINE, side*.31,.158,.193)
+
+        -- Draw the upper lid thicker than the lower one; it changes the
+        -- entire expression from "cute doll" to mischievously smug.
+        stamp("UncannyUpperLiner_"..sideName, Vector3.new(.49,.09,.055),
+            LINER, side*.324,.223,.13, side*math.rad(10))
+        stamp("UncannyWing_"..sideName, Vector3.new(.23,.074,.055),
+            LINER, side*.56,.23,.11, side*math.rad(26), Enum.PartType.Block)
+        stamp("UncannyLash_"..sideName, Vector3.new(.14,.055,.042),
+            LINER, side*.557,.29,.13, side*math.rad(57), Enum.PartType.Block)
+
+        -- The signature "way too confident for a baby" angled eyebrows.
+        stamp("UncannyBrow_"..sideName, Vector3.new(.48,.115,.09),
+            BROW, side*.335,.44,.06, side*math.rad(16))
+        stamp("UncannyBrowTail_"..sideName, Vector3.new(.18,.09,.072),
+            BROW, side*.53,.50,.078, side*math.rad(33))
+    end
+
+    -- Small original nose, full lips, and an off-center smirk.
+    stamp("UncannyNose", Vector3.new(.16,.12,.13),
+        SKIN_SHADE, 0,-.115,.065)
+    stamp("UncannyMouthCrease", Vector3.new(.45,.105,.043),
+        LIP_DARK, .025,-.417,.054, math.rad(-5))
+    stamp("UncannyTopLip", Vector3.new(.43,.096,.047),
+        LIP, .025,-.393,.092, math.rad(-5))
+    stamp("UncannyBottomLip", Vector3.new(.385,.095,.053),
+        LIP_LIGHT, .025,-.477,.082, math.rad(-4))
+    stamp("UncannySmirkCorner", Vector3.new(.11,.045,.038),
+        LIP_DARK, .243,-.375,.113, math.rad(-24), Enum.PartType.Block)
+end
+
 local function makeBaby(ch: Model)
     local root = ch:WaitForChild("HumanoidRootPart", 12)
     local hum = ch:WaitForChild("Humanoid", 12)
@@ -77,7 +156,8 @@ local function makeBaby(ch: Model)
 
     local shell = Instance.new("Model")
     shell.Name = "BabyBrawl_BabyShell"
-    shell:SetAttribute("Version", 2)
+    shell:SetAttribute("Version", 3)
+    shell:SetAttribute("FaceStyle", "UncannyBabyV1")
     shell.Parent = ch
 
     -- Keep the baby's palms/knees near the floor while the invisible humanoid
@@ -97,24 +177,10 @@ local function makeBaby(ch: Model)
     joint(root, "BB_BodyMotor", root, body, CFrame.new(0,-bodyDrop,-0.03))
     shell.PrimaryPart = body
 
-    local head = piece(shell, "Head", Vector3.new(1.53,1.46,1.47), SKIN)
+    local head = piece(shell, "Head", Vector3.new(1.55,1.60,1.51), SKIN)
     joint(body, "BB_HeadMotor", body, head, CFrame.new(0,0.51,-0.89))
-    -- Face looks forward, which is local -Z in Roblox.
-    for _,sgn in ipairs({-1,1}) do
-        local side = sgn
-        detail(shell, "Ear", head, Vector3.new(.28,.35,.20), SKIN, CFrame.new(side*.76,-.11,0))
-        detail(shell, "Cheek", head, Vector3.new(.42,.30,.12), CHEEK, CFrame.new(side*.46,-.25,-.625))
-        detail(shell, "EyeWhite", head, Vector3.new(.37,.42,.115), Color3.fromRGB(255,255,252), CFrame.new(side*.32,.14,-.672))
-        detail(shell, "Iris", head, Vector3.new(.235,.29,.075), Color3.fromRGB(104,65,43), CFrame.new(side*.32,.115,-.745))
-        detail(shell, "Pupil", head, Vector3.new(.155,.22,.055), EYE, CFrame.new(side*.32,.11,-.782))
-        detail(shell, "EyeShine", head, Vector3.new(.068,.08,.030), DIAPER, CFrame.new(side*.355,.195,-.815))
-        detail(shell, "Eyebrow", head, Vector3.new(.34,.078,.08), SKIN_SHADE,
-            CFrame.new(side*.32,.425,-.681)*CFrame.Angles(0,0,side*math.rad(-12)), Enum.PartType.Block)
-    end
-    detail(shell, "Nose", head, Vector3.new(.19,.14,.16), SKIN_SHADE, CFrame.new(0,-.11,-.738))
-    detail(shell, "Mouth", head, Vector3.new(.36,.27,.065), Color3.fromRGB(112,48,61), CFrame.new(0,-.385,-.655))
-    detail(shell, "Tongue", head, Vector3.new(.20,.075,.035), Color3.fromRGB(251,146,157), CFrame.new(0,-.49,-.704))
-    detail(shell, "HairCurl", head, Vector3.new(.20,.20,.24), Color3.fromRGB(106,70,50), CFrame.new(.11,.77,-.13))
+    -- The shared body/animation motors remain identical to Phase 2.
+    buildUncannyFace(shell, head)
 
     local diaper = piece(shell, "Diaper", Vector3.new(1.48,1.05,1.17), DIAPER)
     joint(body, "BB_DiaperMotor", body, diaper, CFrame.new(0,-.12,.63))
@@ -153,7 +219,7 @@ local function makeBaby(ch: Model)
     for _,d in ipairs(ch:GetDescendants()) do hideOriginal(d) end
     local connection = ch.DescendantAdded:Connect(hideOriginal)
     ch.Destroying:Once(function() connection:Disconnect() end)
-    print("[BabyBrawl P2] Crawling baby shell grounded for", ch.Name, "visual body drop:", math.round(bodyDrop * 100) / 100)
+    print("[BabyBrawl FACE V1] Uncanny baby ready for", ch.Name, "face style:", shell:GetAttribute("FaceStyle"), "body drop:", math.round(bodyDrop * 100) / 100)
 end
 
 local function listen(plr: Player)
