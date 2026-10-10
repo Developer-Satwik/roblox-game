@@ -8,6 +8,12 @@ A simple one-map Roblox baby battlegrounds game. Players will eventually use a c
 
 [Install Phase 2](docs/PHASE2.md) · [Phase 2 Command Bar installer](tools/BabyBrawl_Phase2_Installer.luau)
 
+## Combat feedback patch (after Phase 2)
+
+If your baby appears but basic attacks seem inactive, run the [Combat Feedback installer](tools/BabyBrawl_CombatFeedback_Installer.luau) from the **Roblox Studio Command Bar in Edit mode**. It updates the client input and baby animation, then installs a **Studio-only Practice Baby** around five studs in front of your character. The target displays HP; left-click or BONK to test headbutt hits when facing it. Run Play again after installing. The patch does not change imported map geometry or production matchmaking.
+
+**The four centered specials (Tongue Tag, Belly Flop, Mega Burp, Tantrum) are still placeholders.** Holding F blocks and holding Shift activates fart sprint. In a multiplayer test, Phase 1 headbutts only damage other players in front and within ~6 studs; spawn protection lasts ~2.5 seconds.
+
 ## Project state
 
 **Phase 1: installed and reported working in Studio. Phase 2: visual baby prototype awaiting playtest.**
