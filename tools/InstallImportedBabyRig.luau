@@ -58,6 +58,15 @@ local animator = StarterPlayer:FindFirstChild("StarterPlayerScripts")
 
 -- Source imported model must contain no scripts; character scripts are
 -- still injected by StarterPlayer/StarterCharacterScripts as normal.
+-- Move the untrusted source out of Workspace; don't allow stray model
+-- scripts or a second visible baby to survive when Play begins.
+for _,o in ipairs(src:GetDescendants()) do
+    if o:IsA("LuaSourceContainer") then o:Destroy() end
+end
+src.Name = "ImportedBaby_SourceBackup"
+local existingSource = backups:FindFirstChild(src.Name)
+if existingSource then existingSource:Destroy() end
+src.Parent = backups
 copy.Parent = StarterPlayer
 if prior then prior:Destroy() end
 if visual and visual:IsA("Script") then visual.Enabled = false end
