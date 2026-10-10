@@ -94,6 +94,15 @@ local function inspectCharacter()
     local baby = ch and ch:FindFirstChild("BabyBrawl_BabyShell")
     modeLine.Text = "BABY: "..(baby and "YES" or "NO").."  |  HUMANOID: "..(h and "YES" or "NO")
     print("[BB INPUT QA] Baby shell:",baby~=nil,"Character:",ch~=nil,"Controls:",UIS.KeyboardEnabled and "keyboard" or "touch")
+    if h then
+        h:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            modeLine.Text = "BABY: "..(baby and "YES" or "NO").." | SPEED: "..tostring(h.WalkSpeed).." | SPRINT: "..tostring(h:GetAttribute("BB_Sprinting"))
+        end)
+        h:GetAttributeChangedSignal("BB_Sprinting"):Connect(function()
+            modeLine.Text = "BABY: "..(baby and "YES" or "NO").." | SPEED: "..tostring(h.WalkSpeed).." | SPRINT: "..tostring(h:GetAttribute("BB_Sprinting"))
+        end)
+        modeLine.Text = "BABY: "..(baby and "YES" or "NO").." | SPEED: "..tostring(h.WalkSpeed).." | SPRINT: "..tostring(h:GetAttribute("BB_Sprinting"))
+    end
 end
 
 localPlayer.CharacterAdded:Connect(function()
