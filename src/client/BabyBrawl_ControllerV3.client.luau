@@ -94,7 +94,7 @@ local title=text(bar,"CharacterName","DEFAULT BABY",12,white)
 title.Size=UDim2.new(1,0,0,22)
 title.Position=UDim2.fromOffset(0,2)
 local back=frame(bar,"HealthBackground",UDim2.fromOffset(13,30),UDim2.new(1,-26,0,8),Vector2.zero,Color3.fromRGB(79,79,86),0,4)
-local hp=frame(back,"HealthFill",UDim2.new(),UDim2.fromScale(1,1),Vector2.zero,green,0,4)
+local hp=frame(back,"HealthFill",UDim2.fromOffset(0,0),UDim2.fromScale(1,1),Vector2.zero,green,0,4)
 
 local hint=frame(gui,"Notification",UDim2.new(.5,0,1,-132),UDim2.fromOffset(320,27),Vector2.new(.5,1),bg,.18,9)
 hint.Visible=false
