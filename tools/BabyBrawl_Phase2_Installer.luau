@@ -80,8 +80,21 @@ local function makeBaby(ch: Model)
     shell:SetAttribute("Version", 2)
     shell.Parent = ch
 
+    -- Keep the baby's palms/knees near the floor while the invisible humanoid
+    -- keeps its normal collision. The previous constant -1.32 left babies
+    -- hovering because Roblox places the HumanoidRootPart well above ground.
+    -- Roblox documents different root-height formulas for R15 and R6 rigs.
+    local standingRootHeight = hum.HipHeight + root.Size.Y * 0.5
+    if hum.RigType == Enum.HumanoidRigType.R6 then
+        local leg = ch:FindFirstChild("Left Leg")
+        standingRootHeight += (leg and leg:IsA("BasePart")) and leg.Size.Y or 2
+    end
+    -- The visual palms and knees reach about 0.88 studs below the body center.
+    -- Thus, a 0.95 stud body center puts them ~0.07 studs above ground.
+    local bodyDrop = math.max(0.5, standingRootHeight - 0.95)
+    shell:SetAttribute("VisualBodyDrop", bodyDrop)
     local body = piece(shell, "Body", Vector3.new(1.45,1.24,1.74), SKIN)
-    joint(root, "BB_BodyMotor", root, body, CFrame.new(0,-1.32,-0.03))
+    joint(root, "BB_BodyMotor", root, body, CFrame.new(0,-bodyDrop,-0.03))
     shell.PrimaryPart = body
 
     local head = piece(shell, "Head", Vector3.new(1.53,1.46,1.47), SKIN)
@@ -140,7 +153,7 @@ local function makeBaby(ch: Model)
     for _,d in ipairs(ch:GetDescendants()) do hideOriginal(d) end
     local connection = ch.DescendantAdded:Connect(hideOriginal)
     ch.Destroying:Once(function() connection:Disconnect() end)
-    print("[BabyBrawl P2] Crawling baby shell created for", ch.Name)
+    print("[BabyBrawl P2] Crawling baby shell grounded for", ch.Name, "visual body drop:", math.round(bodyDrop * 100) / 100)
 end
 
 local function listen(plr: Player)
