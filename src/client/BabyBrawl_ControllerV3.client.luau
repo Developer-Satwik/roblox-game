@@ -151,8 +151,12 @@ local function setSprint(on: boolean)
     end
     isSprinting=on
     remote:FireServer("Sprint",on)
-    if gas then gas.Enabled=on end
+    if gas then
+        gas.Enabled=on
+        if on then gas:Emit(14) end -- instant visible fart puff, even while stationary
+    end
     refreshButtons()
+    notify(on and "FART RUN ON — MOVE TO BOOST!" or "FART RUN OFF")
     print("[BB v3] Sent Sprint",on)
 end
 local function bonk()
@@ -218,6 +222,20 @@ else
             return Enum.ContextActionResult.Sink
         end,false,priority,key)
     end
+    -- Supplemental Shift hook for Studio/game versions where built-in
+    -- shift-lock consumes the action before a custom action binding receives it.
+    -- setSprint is idempotent, so this cannot double-send a sprint.
+    UIS.InputBegan:Connect(function(input)
+        if UIS:GetFocusedTextBox() then return end
+        if input.KeyCode==Enum.KeyCode.LeftShift or input.KeyCode==Enum.KeyCode.RightShift then
+            setSprint(true)
+        end
+    end)
+    UIS.InputEnded:Connect(function(input)
+        if input.KeyCode==Enum.KeyCode.LeftShift or input.KeyCode==Enum.KeyCode.RightShift then
+            setSprint(false)
+        end
+    end)
     print("[BabyBrawl Controller v3] Desktop actions bound (LMB/F/Shift/1-4)")
 end
 
@@ -238,10 +256,15 @@ local function characterAdded(ch: Model)
     end
     local root=ch:WaitForChild("HumanoidRootPart",12)
     if root and root:IsA("BasePart") then
+        -- The root belongs to the invisible standing avatar. Position the
+        -- fart particles on the baby's diaper, not inside the spawn platform.
+        local shell=ch:WaitForChild("BabyBrawl_BabyShell", 4)
+        local diaper = shell and shell:FindFirstChild("Diaper")
+        local parentPart = if diaper and diaper:IsA("BasePart") then diaper else root
         local att=Instance.new("Attachment")
         att.Name="BB3_GasAttachment"
-        att.Position=Vector3.new(0,-1,1)
-        att.Parent=root
+        att.Position=if parentPart == root then Vector3.new(0,-1,1) else Vector3.new(0,-.08,.66)
+        att.Parent=parentPart
         local puff=Instance.new("ParticleEmitter")
         puff.Name="BB3_FartRunParticles"
         puff.Color=ColorSequence.new(Color3.fromRGB(160,235,111),Color3.fromRGB(76,184,82))
@@ -283,12 +306,21 @@ remote.OnClientEvent:Connect(function(kind: any,uid: any,flag: any)
         notify("OUCH!")
     elseif kind=="PracticeHitFX" then
         notify("PRACTICE HIT! "..tostring(math.ceil(tonumber(flag) or 0)).." HP LEFT")
+    elseif kind=="PracticeMissFX" then
+        notify(tostring(flag))
     elseif kind=="BlockedFX" then
         notify("BLOCKED!")
     elseif kind=="BlockFX" then
         print("[BB v3] Server confirmed block:",flag)
     elseif kind=="SprintFX" then
-        print("[BB v3] Server confirmed sprint:",flag)
+        local hum=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if flag==true then
+            notify("FART RUN ACTIVE")
+            if gas then gas.Enabled=true; gas:Emit(10) end
+        else
+            if gas then gas.Enabled=false end
+        end
+        print("[BB v3] Server confirmed sprint:",flag,"WalkSpeed:",hum and hum.WalkSpeed)
     end
 end)
 
