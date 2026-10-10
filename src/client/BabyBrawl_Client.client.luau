@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RS = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local CAS = game:GetService("ContextActionService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local action = RS:WaitForChild("BabyBrawl_V1"):WaitForChild("CombatAction") :: RemoteEvent
@@ -178,21 +179,48 @@ if mobile then
     sprintButton.TextSize=12
     sprintButton.Activated:Connect(function() setSprint(not sprinting) end)
 else
-    -- Keyboard and mouse: left click, F to block, Shift to fart sprint, 1–4.
-    UIS.InputBegan:Connect(function(input, processed)
-        if processed or UIS:GetFocusedTextBox() then return end
-        if input.UserInputType==Enum.UserInputType.MouseButton1 then sendAttack() end
-        if input.KeyCode==Enum.KeyCode.F then setBlock(true) end
-        if input.KeyCode==Enum.KeyCode.LeftShift or input.KeyCode==Enum.KeyCode.RightShift then setSprint(true) end
-        local numberKeys={Enum.KeyCode.One,Enum.KeyCode.Two,Enum.KeyCode.Three,Enum.KeyCode.Four}
-        for i,k in ipairs(numberKeys) do
-            if input.KeyCode==k then notify("Ability "..i.." arrives with the baby rig") end
+    -- ContextActionService is designed for actual player actions; the old
+    -- InputBegan "processed" early return could discard game input.
+    -- Keep these bound to PC only: mobile uses the custom on-screen buttons.
+    local PRIORITY = Enum.ContextActionPriority.High.Value + 5
+    CAS:BindActionAtPriority("BabyBrawlBonk", function(_, phase)
+        if phase == Enum.UserInputState.Begin then
+            if UIS:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
+            sendAttack()
         end
-    end)
-    UIS.InputEnded:Connect(function(input)
-        if input.KeyCode==Enum.KeyCode.F then setBlock(false) end
-        if input.KeyCode==Enum.KeyCode.LeftShift or input.KeyCode==Enum.KeyCode.RightShift then setSprint(false) end
-    end)
+        return Enum.ContextActionResult.Sink
+    end, false, PRIORITY, Enum.UserInputType.MouseButton1)
+
+    CAS:BindActionAtPriority("BabyBrawlGuard", function(_, phase)
+        if phase == Enum.UserInputState.Begin then
+            if UIS:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
+            setBlock(true)
+        elseif phase == Enum.UserInputState.End or phase == Enum.UserInputState.Cancel then
+            setBlock(false)
+        end
+        return Enum.ContextActionResult.Sink
+    end, false, PRIORITY, Enum.KeyCode.F)
+
+    CAS:BindActionAtPriority("BabyBrawlFartRun", function(_, phase)
+        if phase == Enum.UserInputState.Begin then
+            if UIS:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
+            setSprint(true)
+        elseif phase == Enum.UserInputState.End or phase == Enum.UserInputState.Cancel then
+            setSprint(false)
+        end
+        return Enum.ContextActionResult.Sink
+    end, false, PRIORITY, Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift)
+
+    local numberKeys = {Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four}
+    for i, key in ipairs(numberKeys) do
+        CAS:BindActionAtPriority("BabyBrawlAbility"..i, function(_, phase)
+            if phase == Enum.UserInputState.Begin then
+                if UIS:GetFocusedTextBox() then return Enum.ContextActionResult.Pass end
+                notify("Ability "..i.." is not yet implemented")
+            end
+            return Enum.ContextActionResult.Sink
+        end, false, PRIORITY, key)
+    end
 end
 
 -- Simple local gas trail (visual ONLY) for the Fart Run input; other client
@@ -253,4 +281,4 @@ local function updateScale()
 end
 updateScale()
 if workspace.CurrentCamera then workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale) end
-print("[BabyBrawl V1] Controls ready: PC LMB/F/Shift/1–4; mobile BONK/BLOCK/FART RUN + 1–4")
+print("[BabyBrawl Controls v2] Action bindings ready: LMB=bonk, F=block, Shift=fart run; abilities 1-4 not yet live")
