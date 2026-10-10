@@ -138,6 +138,10 @@ local function sendAttack()
     local t=os.clock()
     if t-lastLocalAttack < .55 then return end
     lastLocalAttack=t
+    -- Play the local baby's bonk pose immediately; server still validates hits.
+    local ch = player.Character
+    local hum = ch and ch:FindFirstChildOfClass("Humanoid")
+    if hum then hum:SetAttribute("BB_AttackPulseUntil", t + .39) end
     action:FireServer("Attack")
 end
 local blockButton: TextButton?=nil
