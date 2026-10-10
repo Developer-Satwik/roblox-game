@@ -146,7 +146,15 @@ RunService.PreSimulation:Connect(function(dt: number)
         local blocking = r.humanoid:GetAttribute("BB_Blocking") == true
         r.blockWeight += ( (blocking and 1 or 0) - r.blockWeight ) * math.min(1,dt*12)
         local a = r.blockWeight
-        local attack = math.clamp((r.attackUntil-now)/.29,0,1)
+        -- Predict the local player's bonk pose immediately, independently of
+        -- whether another player is in range; the server remains authoritative.
+        if r.player == localPlayer then
+            local localPulse = r.humanoid:GetAttribute("BB_AttackPulseUntil")
+            if typeof(localPulse) == "number" then
+                r.attackUntil = math.max(r.attackUntil, localPulse)
+            end
+        end
+        local attack = math.clamp((r.attackUntil-now)/.39,0,1)
         attack = math.sin(attack*math.pi)
         local impact = math.clamp((r.impactUntil-now)/.38,0,1)
         local bob = moving and (.043*math.abs(math.sin(phase*2))) or (.025*math.sin(r.time*2))
@@ -154,11 +162,11 @@ RunService.PreSimulation:Connect(function(dt: number)
         -- Butt Guard: baby's body turns so the diaper faces the attacker.
         -- Phase 2 still uses Phase 1's omni-directional block validation.
         r.body.Transform =
-            CFrame.new(0,bob+.12*a,.08*a-.09*attack)
+            CFrame.new(0,bob+.12*a,.08*a-.27*attack)
             * CFrame.Angles(math.rad(-11)*a + math.rad(10)*attack - math.rad(8)*impact,
                 math.pi*a, 0)
         r.head.Transform =
-            CFrame.new(0,.08*a,-.22*attack)
+            CFrame.new(0,.08*a,-.37*attack)
             * CFrame.Angles(math.rad(-8)*a+math.rad(25)*attack+math.rad(12)*impact,
                 math.sin(r.time*1.4)*.035,0)
 
