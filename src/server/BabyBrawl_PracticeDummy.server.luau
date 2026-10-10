@@ -14,8 +14,8 @@ local targets = Instance.new("Folder")
 targets.Name = "BabyBrawl_StudioPractice"
 targets.Parent = workspace
 local TARGET_HEALTH = 96
-local RANGE = 6
-local state: {[Player]: {model: Model?, lastHit: number}} = {}
+local RANGE = 7.5
+local state: {[Player]: {model: Model?, lastHit: number, health: number, readout: TextLabel?}} = {}
 
 local function part(parent: Instance, name: string, size: Vector3, color: Color3, basis: CFrame, offset: Vector3, shape: Enum.PartType?): Part
     local p = Instance.new("Part")
@@ -41,7 +41,7 @@ local function spawnTarget(plr: Player, ch: Model)
     local look = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
     if look.Magnitude < .5 then look = Vector3.new(0,0,-1) end
     look = look.Unit
-    local near = root.Position + look*4.7
+    local near = root.Position + look*3.8
     local params = RaycastParams.new()
     params.FilterType = Enum.RaycastFilterType.Exclude
     params.FilterDescendantsInstances = {ch, targets}
@@ -74,15 +74,12 @@ local function spawnTarget(plr: Player, ch: Model)
         part(model,"Hand",Vector3.new(.42,.30,.43),Color3.fromRGB(250,202,162),basis,Vector3.new(side*.64,-.46,-.53))
         part(model,"Foot",Vector3.new(.44,.30,.50),Color3.fromRGB(250,202,162),basis,Vector3.new(side*.55,-.53,.62))
     end
-    local hum = Instance.new("Humanoid")
-    hum.Name = "Humanoid"
-    hum.RequiresNeck = false
-    hum.BreakJointsOnDeath = false
-    hum.MaxHealth = TARGET_HEALTH
-    hum.Health = TARGET_HEALTH
-    hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-    hum.Parent = model
-
+    -- Use an explicit numeric practice HP counter. The prototype dummy is
+    -- assembled from separate ANCHORED parts, not a valid rigged Humanoid;
+    -- relying on Humanoid:TakeDamage made hits look unreliable.
+    model:SetAttribute("PracticeHP", TARGET_HEALTH)
+    entry.health = TARGET_HEALTH
+    entry.lastHit = 0
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "TrainingLabel"
     billboard.AlwaysOnTop = true
@@ -99,26 +96,14 @@ local function spawnTarget(plr: Player, ch: Model)
     label.TextColor3 = Color3.fromRGB(255,255,255)
     label.TextStrokeTransparency = .18
     label.Parent = billboard
-    local function update()
-        label.Text = "PRACTICE BABY\n"..math.ceil(math.max(hum.Health,0)).." / "..TARGET_HEALTH.." HP"
-    end
-    hum.HealthChanged:Connect(update)
-    update()
-
     entry.model = model
-    hum.Died:Connect(function()
-        label.Text = "BONKED!\nRespawning..."
-        task.delay(1.5, function()
-            if model == entry.model and plr.Parent and plr.Character == ch then
-                spawnTarget(plr,ch)
-            end
-        end)
-    end)
-    print("[BabyBrawl QA] Practice baby ready. Face it and LEFT CLICK or tap BONK to test.")
+    entry.readout = label
+    label.Text = "PRACTICE BABY\n96 / 96 HP"
+    print("[BabyBrawl QA] Practice baby ready 3.8 studs ahead. Move close, face baby, and BONK.")
 end
 
 local function attach(plr: Player)
-    state[plr] = {model=nil,lastHit=0}
+    state[plr] = {model=nil,lastHit=0,health=TARGET_HEALTH,readout=nil}
     plr.CharacterAdded:Connect(function(ch)
         task.spawn(spawnTarget,plr,ch)
     end)
@@ -135,34 +120,54 @@ for _,p in ipairs(Players:GetPlayers()) do attach(p) end
 combat.OnServerEvent:Connect(function(plr: Player, action: any)
     if action ~= "Attack" then return end
     local entry = state[plr]
-    if not entry or not entry.model or not entry.model.Parent then return end
+    if not entry or not entry.model or not entry.model.Parent or entry.health <= 0 then return end
     local now = os.clock()
-    if now - entry.lastHit < .55 then return end
+    if now-entry.lastHit < .55 then return end
     local ch = plr.Character
     local root = ch and ch:FindFirstChild("HumanoidRootPart")
     local attackerHum = ch and ch:FindFirstChildOfClass("Humanoid")
     local dummy = entry.model
     local target = dummy:FindFirstChild("HumanoidRootPart")
-    local targetHum = dummy:FindFirstChildOfClass("Humanoid")
     if not root or not root:IsA("BasePart") or not attackerHum or attackerHum.Health <= 0 then return end
-    if not target or not target:IsA("BasePart") or not targetHum or targetHum.Health <= 0 then return end
+    if not target or not target:IsA("BasePart") then return end
     if attackerHum:GetAttribute("BB_Blocking") == true then return end
 
     local delta = target.Position-root.Position
     local planar = Vector3.new(delta.X,0,delta.Z)
-    if planar.Magnitude < .05 or planar.Magnitude >= RANGE or math.abs(delta.Y)>4.5 then return end
-    if root.CFrame.LookVector:Dot(planar.Unit) <= .45 then return end
+    local distance = planar.Magnitude
+    local facing = if distance > .05 then root.CFrame.LookVector:Dot(planar.Unit) else 1
     entry.lastHit = now
-    targetHum:TakeDamage(16)
+    -- Studio target is deliberately forgiving; real player hit rules are
+    -- unchanged in BabyBrawl_Server. Don't reward punches from far away.
+    if distance >= RANGE or math.abs(delta.Y) > 5 or (distance > 2.5 and facing < .10) then
+        combat:FireClient(plr, "PracticeMissFX", plr.UserId,
+            if distance >= RANGE then "GET CLOSER" else "FACE THE BABY")
+        print("[BabyBrawl QA] Miss", plr.Name, "distance", math.round(distance*10)/10, "facing", math.round(facing*100)/100)
+        return
+    end
+
+    entry.health = math.max(0,entry.health-16)
+    dummy:SetAttribute("PracticeHP",entry.health)
+    if entry.readout then
+        entry.readout.Text = "PRACTICE BABY\n"..entry.health.." / "..TARGET_HEALTH.." HP"
+    end
     local highlight = Instance.new("Highlight")
     highlight.Adornee = dummy
     highlight.FillColor = Color3.fromRGB(255,232,93)
     highlight.FillTransparency = .18
     highlight.OutlineColor = Color3.fromRGB(255,255,255)
     highlight.Parent = dummy
-    Debris:AddItem(highlight,.15)
-    combat:FireClient(plr, "PracticeHitFX", plr.UserId, targetHum.Health)
-    print("[BabyBrawl QA] Practice hit", plr.Name, math.ceil(targetHum.Health), "HP left")
+    Debris:AddItem(highlight,.17)
+    combat:FireClient(plr, "PracticeHitFX", plr.UserId, entry.health)
+    print("[BabyBrawl QA] Practice hit", plr.Name, entry.health, "HP left")
+    if entry.health <= 0 then
+        if entry.readout then entry.readout.Text = "BONKED!\nRESPAWNING..." end
+        task.delay(1.3,function()
+            if plr.Parent and plr.Character==ch and entry.model==dummy then
+                task.spawn(spawnTarget,plr,ch)
+            end
+        end)
+    end
 end)
 
-print("[BabyBrawl QA] Studio-only practice target system ready")
+print("[BabyBrawl QA v2] Studio practice target uses numeric HP; close BONKs are now reliable.")
