@@ -1,3 +1,11 @@
+## Visual update — Uncanny Baby Face V1
+
+The starter crawling baby now uses an original exaggerated Roblox-avatar-inspired face: sharply angled dark brows, half-lidded almond eyes with winged liner, subtle cheek color, and an asymmetric smug smile. The bald head and chubby diaper-wearing crawling body remain. No copyrighted facial texture or external Roblox asset is required: the face uses lightweight built-in parts welded to the existing Head.
+
+**To install on your current place:** Save a backup, stop Play, and run [BabyBrawl_UncannyFaceV1_Installer.luau](tools/BabyBrawl_UncannyFaceV1_Installer.luau) from Studio's **Command Bar in Edit mode**. Save and start Play. Rotate the camera around or use a second client to view the baby's face. The old character script is saved as a disabled backup. If you don't like the look, this can be rolled back.
+
+The update only replaces `ServerScriptService/BabyBrawl_BabyVisuals`. **It does not update or reset the map, existing combat server, Sprint/Bonk controls, practice dummy, camera, or ability HUD.** This remains a primitive-mesh baby prototype, not yet a skinned imported model.
+
 ## Latest patch — sprint + practice target (V4)
 
 Use [BabyBrawl_SprintTraining_V4_Installer.luau](tools/BabyBrawl_SprintTraining_V4_Installer.luau) in Roblox Studio's **Command Bar (Edit mode)** after V3. It updates four scripts only: the server combat controller, Studio-only practice dummy, client combat controller, and Studio-only input monitor. It does not replace the map or crawling baby rig. Safe to rerun; creates disabled backups.
