@@ -1,3 +1,9 @@
+## New 3D asset workflow
+
+Stop extending the procedural baby. Use a real, licensed GLB or FBX character with an R15-compatible skeleton. See [asset sourcing and Sloyd instructions](assets/character/README.md). Once imported and rigged in Roblox Studio, select the model and run [InstallImportedBabyRig.luau](tools/InstallImportedBabyRig.luau). The installer validates the rig, strips imported scripts, and keeps the combat HUD and map.
+
+**Status:** The external 3D asset itself is not yet in the repository. The integrated place still uses the temporary Roblox-parts baby until we receive a rigged model export.
+
 ## Visual update — Uncanny Baby Face V1
 
 The starter crawling baby now uses an original exaggerated Roblox-avatar-inspired face: sharply angled dark brows, half-lidded almond eyes with winged liner, subtle cheek color, and an asymmetric smug smile. The bald head and chubby diaper-wearing crawling body remain. No copyrighted facial texture or external Roblox asset is required: the face uses lightweight built-in parts welded to the existing Head.
