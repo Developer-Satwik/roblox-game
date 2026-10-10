@@ -23,8 +23,12 @@ local function updateMovement(plr: Player)
     if not state then return end
     local _,hum = livingCharacter(plr)
     if hum then
-        hum.WalkSpeed = state.blocking and 8 or (state.sprinting and 25 or 16)
+        hum.WalkSpeed = state.blocking and 8 or (state.sprinting and 32 or 16)
         hum:SetAttribute("BB_Blocking", state.blocking)
+        hum:SetAttribute("BB_Sprinting", state.sprinting and not state.blocking)
+        if game:GetService("RunService"):IsStudio() then
+            print("[BB SERVER] WalkSpeed", plr.Name, hum.WalkSpeed, "block", state.blocking, "sprint", state.sprinting)
+        end
     end
 end
 
@@ -131,7 +135,9 @@ combatEvent.OnServerEvent:Connect(function(plr, action, value)
     -- Throttle each input separately. The old global 35 ms gate dropped
     -- legitimate block->sprint transitions sent in the same frame.
     local lastForAction = state.lastByAction[action] or -math.huge
-    if now - lastForAction < 0.035 then return end
+    -- Never drop a rapid press/release of a held control. Cooldowns for
+    -- Attack are enforced separately in attack() itself.
+    if action == "Attack" and now - lastForAction < 0.035 then return end
     state.lastByAction[action] = now
     -- Developer QA can distinguish "server received" from "attack hit".
     if game:GetService("RunService"):IsStudio() then
