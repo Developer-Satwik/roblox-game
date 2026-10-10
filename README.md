@@ -14,6 +14,10 @@ If your baby appears but basic attacks seem inactive, run the [Combat Feedback i
 
 **The four centered specials (Tongue Tag, Belly Flop, Mega Burp, Tantrum) are still placeholders.** Holding F blocks and holding Shift activates fart sprint. In a multiplayer test, Phase 1 headbutts only damage other players in front and within ~6 studs; spawn protection lasts ~2.5 seconds.
 
+## Current fix — combat inputs (Phase 2)
+
+Use [BabyBrawl_ControllerV3_RepairInstaller.luau](tools/BabyBrawl_ControllerV3_RepairInstaller.luau) from the **Studio Command Bar in Edit mode** if the Studio QA panel detects keys but **SERVER** stays on "waiting" and the normal Baby Brawl HUD is absent. This replaces the unresponsive `BabyBrawl_Client` with a separate `BabyBrawl_ControllerV3`, keeps a disabled copy of the legacy controller, upgrades the combat server with per-action throttling and a Studio-only `InputAck` event, and does not touch the imported map or baby assets. Install once, save, then use the top blue **Play** button. The four numbered abilities remain nonfunctional placeholders.
+
 ## Latest controls diagnostic (October 2026)
 
 If Baby Brawl's keyboard or mouse controls appear inactive, install [the PC input fix and Studio-only control monitor](tools/BabyBrawl_InputFix_Installer.luau) in **Edit mode** using Roblox Studio's Command Bar. Save, then choose the top blue **Play** action (not Command Bar Run or Test > Run), and click inside the **Client** viewport before pressing LMB, F or Shift.
