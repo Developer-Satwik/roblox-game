@@ -7,7 +7,7 @@ local Debris = game:GetService("Debris")
 
 local rootFolder = ReplicatedStorage:WaitForChild("BabyBrawl_V1")
 local combatEvent = rootFolder:WaitForChild("CombatAction") :: RemoteEvent
-local stats: {[Player]: {lastAttack: number, lastRemote: number, blocking: boolean, sprinting: boolean, spawnAt: number}} = {}
+local stats: {[Player]: {lastAttack: number, lastRemote: number, lastByAction: {[string]: number}, blocking: boolean, sprinting: boolean, spawnAt: number}} = {}
 
 local function livingCharacter(plr: Player): (Model?, Humanoid?, BasePart?)
     local ch = plr.Character
@@ -29,7 +29,7 @@ local function updateMovement(plr: Player)
 end
 
 local function setupPlayer(plr: Player)
-    local state = {lastAttack=0, lastRemote=0, blocking=false, sprinting=false, spawnAt=0}
+    local state = {lastAttack=0, lastRemote=0, lastByAction={}, blocking=false, sprinting=false, spawnAt=0}
     stats[plr] = state
     local statsFolder = plr:FindFirstChild("leaderstats") or Instance.new("Folder")
     statsFolder.Name = "leaderstats"
@@ -126,9 +126,17 @@ combatEvent.OnServerEvent:Connect(function(plr, action, value)
     if typeof(action) ~= "string" then return end
     local state = stats[plr]
     if not state then return end
+    if action ~= "Attack" and action ~= "Block" and action ~= "Sprint" then return end
     local now = os.clock()
-    if now-state.lastRemote < 0.035 then return end -- basic remote spam bound
-    state.lastRemote = now
+    -- Throttle each input separately. The old global 35 ms gate dropped
+    -- legitimate block->sprint transitions sent in the same frame.
+    local lastForAction = state.lastByAction[action] or -math.huge
+    if now - lastForAction < 0.035 then return end
+    state.lastByAction[action] = now
+    -- Developer QA can distinguish "server received" from "attack hit".
+    if game:GetService("RunService"):IsStudio() then
+        combatEvent:FireClient(plr, "InputAck", plr.UserId, action)
+    end
     if action == "Attack" then
         attack(plr)
     elseif action == "Block" and typeof(value) == "boolean" then
