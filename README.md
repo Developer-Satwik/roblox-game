@@ -1,3 +1,11 @@
+## Latest patch — sprint + practice target (V4)
+
+Use [BabyBrawl_SprintTraining_V4_Installer.luau](tools/BabyBrawl_SprintTraining_V4_Installer.luau) in Roblox Studio's **Command Bar (Edit mode)** after V3. It updates four scripts only: the server combat controller, Studio-only practice dummy, client combat controller, and Studio-only input monitor. It does not replace the map or crawling baby rig. Safe to rerun; creates disabled backups.
+
+**Test in blue Play:** get near the practice baby (within roughly 7 studs), face it, then BONK. The label should change from 96 HP to 80 HP. Hold Shift *while moving*; WalkSpeed in the QA panel should rise from 16 to 32 and green gas should appear near the diaper. Release Shift to return to speed 16. F still blocks. The four special abilities remain placeholders.
+
+This is a code patch validated against the GitHub source, **not yet verified in a running Roblox Studio playtest**.
+
 # Baby Brawl — Roblox Prototype
 
 A simple one-map Roblox baby battlegrounds game. Players will eventually use a custom crawling baby rig, headbutt attacks, butt-blocking, fart sprinting, and four starter abilities.
